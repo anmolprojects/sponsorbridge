@@ -1,0 +1,133 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* SponsorBridge Editorial/Luxury Palette */
+  --background: #FAFAF7;
+  --foreground: #0D0D0B;
+  --card: #FFFFFF;
+  --card-foreground: #0D0D0B;
+  --popover: #FFFFFF;
+  --popover-foreground: #0D0D0B;
+  --primary: #0D0D0B;
+  --primary-foreground: #FAFAF7;
+  --secondary: #F5F5F0;
+  --secondary-foreground: #0D0D0B;
+  --muted: #F0EFE9;
+  --muted-foreground: #6B6B67;
+  --accent: #C9943A;
+  --accent-foreground: #0D0D0B;
+  --destructive: #C0392B;
+  --destructive-foreground: #FAFAF7;
+  --success: #1A7A4A;
+  --success-foreground: #FAFAF7;
+  --border: #E5E4DE;
+  --input: #E5E4DE;
+  --ring: #C9943A;
+  --chart-1: #C9943A;
+  --chart-2: #1A7A4A;
+  --chart-3: #0D0D0B;
+  --chart-4: #6B6B67;
+  --chart-5: #C0392B;
+  --radius: 0.5rem;
+  --sidebar: #FAFAF7;
+  --sidebar-foreground: #0D0D0B;
+  --sidebar-primary: #0D0D0B;
+  --sidebar-primary-foreground: #FAFAF7;
+  --sidebar-accent: #F5F5F0;
+  --sidebar-accent-foreground: #0D0D0B;
+  --sidebar-border: #E5E4DE;
+  --sidebar-ring: #C9943A;
+}
+
+.dark {
+  --background: #0D0D0B;
+  --foreground: #FAFAF7;
+  --card: #1A1A17;
+  --card-foreground: #FAFAF7;
+  --popover: #1A1A17;
+  --popover-foreground: #FAFAF7;
+  --primary: #FAFAF7;
+  --primary-foreground: #0D0D0B;
+  --secondary: #2A2A25;
+  --secondary-foreground: #FAFAF7;
+  --muted: #2A2A25;
+  --muted-foreground: #A0A09A;
+  --accent: #C9943A;
+  --accent-foreground: #0D0D0B;
+  --destructive: #C0392B;
+  --destructive-foreground: #FAFAF7;
+  --success: #1A7A4A;
+  --success-foreground: #FAFAF7;
+  --border: #3A3A35;
+  --input: #3A3A35;
+  --ring: #C9943A;
+  --chart-1: #C9943A;
+  --chart-2: #1A7A4A;
+  --chart-3: #FAFAF7;
+  --chart-4: #A0A09A;
+  --chart-5: #C0392B;
+  --sidebar: #0D0D0B;
+  --sidebar-foreground: #FAFAF7;
+  --sidebar-primary: #FAFAF7;
+  --sidebar-primary-foreground: #0D0D0B;
+  --sidebar-accent: #2A2A25;
+  --sidebar-accent-foreground: #FAFAF7;
+  --sidebar-border: #3A3A35;
+  --sidebar-ring: #C9943A;
+}
+
+@theme inline {
+  --font-sans: var(--font-sans), 'DM Sans', system-ui, sans-serif;
+  --font-serif: var(--font-serif), 'Playfair Display', Georgia, serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
