@@ -8,7 +8,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Lock, Building2, ArrowRight, Shield, Users, TrendingUp } from "lucide-react"
+import {
+  Mail,
+  Lock,
+  Building2,
+  ArrowRight,
+  Shield,
+  Users,
+  TrendingUp,
+  AlertCircle,
+} from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 export default function CompanyLoginPage() {
   const router = useRouter()
@@ -16,21 +26,63 @@ export default function CompanyLoginPage() {
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsLoading(false)
+    setError(null)
+
+    const supabase = createClient()
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      setError(error.message)
+      setIsLoading(false)
+      return
+    }
+
+    if (!data.user) {
+      setError("Login failed. Please try again.")
+      setIsLoading(false)
+      return
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single()
+
+    if (!profile) {
+      setError("Account not found. Please sign up first.")
+      await supabase.auth.signOut()
+      setIsLoading(false)
+      return
+    }
+
+    if (profile.role !== "company") {
+      setError(
+        "This email is registered as a Creator account. Use Creator Login."
+      )
+      await supabase.auth.signOut()
+      setIsLoading(false)
+      return
+    }
+
     router.push("/company/dashboard")
+    router.refresh()
   }
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Left Side - Form */}
+      {/* Left Side — Form */}
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-12">
         <div className="mx-auto w-full max-w-md">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2 mb-8">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0D0D0B]">
               <span className="font-serif text-lg font-bold text-[#C9943A]">S</span>
@@ -53,9 +105,19 @@ export default function CompanyLoginPage() {
             </p>
           </div>
 
+          {/* Error Alert */}
+          {error && (
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20 mb-6">
+              <AlertCircle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <Label htmlFor="email" className="text-sm font-medium">Work Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">
+                Work Email
+              </Label>
               <div className="relative mt-1">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -66,14 +128,20 @@ export default function CompanyLoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10 h-11"
                   required
+                  autoComplete="email"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                <Link href="/company/forgot-password" className="text-sm text-[#C9943A] hover:underline">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </Label>
+                <Link
+                  href="/company/forgot-password"
+                  className="text-sm text-[#C9943A] hover:underline"
+                >
                   Forgot password?
                 </Link>
               </div>
@@ -87,6 +155,7 @@ export default function CompanyLoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 h-11"
                   required
+                  autoComplete="current-password"
                 />
               </div>
             </div>
@@ -95,9 +164,14 @@ export default function CompanyLoginPage() {
               <Checkbox
                 id="rememberMe"
                 checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                onCheckedChange={(checked) =>
+                  setRememberMe(checked as boolean)
+                }
               />
-              <label htmlFor="rememberMe" className="text-sm text-muted-foreground cursor-pointer">
+              <label
+                htmlFor="rememberMe"
+                className="text-sm text-muted-foreground cursor-pointer"
+              >
                 Remember me for 30 days
               </label>
             </div>
@@ -122,25 +196,30 @@ export default function CompanyLoginPage() {
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-8">
-            Don't have an account?{" "}
-            <Link href="/company/signup" className="text-[#C9943A] hover:underline font-medium">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/company/signup"
+              className="text-[#C9943A] hover:underline font-medium"
+            >
               Start free trial
             </Link>
           </p>
 
-          {/* Creator Login Link */}
           <div className="mt-8 pt-8 border-t border-border text-center">
             <p className="text-sm text-muted-foreground">
               Are you a YouTube creator?
             </p>
-            <Link href="/creator/login" className="text-sm text-[#C9943A] hover:underline font-medium">
+            <Link
+              href="/creator/login"
+              className="text-sm text-[#C9943A] hover:underline font-medium"
+            >
               Go to Creator Login
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Visual */}
+      {/* Right Side — Visual */}
       <div className="hidden lg:flex flex-1 bg-[#0D0D0B] items-center justify-center p-12">
         <div className="max-w-md">
           <div className="w-20 h-20 rounded-2xl bg-[#1A7A4A]/10 flex items-center justify-center mb-8">
@@ -150,7 +229,8 @@ export default function CompanyLoginPage() {
             Find your perfect creators
           </h2>
           <p className="text-[#FAFAF7]/70 mb-8">
-            Access Google OAuth verified creators, AI-powered matching, and escrow-protected deals.
+            Access Google OAuth verified creators, AI-powered matching, and
+            escrow-protected deals.
           </p>
 
           <div className="space-y-4">
@@ -159,8 +239,12 @@ export default function CompanyLoginPage() {
                 <Users className="w-5 h-5 text-[#C9943A]" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#FAFAF7]">2,500+ Verified Creators</p>
-                <p className="text-xs text-[#FAFAF7]/60">All stats verified via Google OAuth</p>
+                <p className="text-sm font-medium text-[#FAFAF7]">
+                  2,500+ Verified Creators
+                </p>
+                <p className="text-xs text-[#FAFAF7]/60">
+                  All stats verified via Google OAuth
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4 p-4 rounded-xl bg-[#1A1A17] border border-[#3A3A35]">
@@ -168,8 +252,12 @@ export default function CompanyLoginPage() {
                 <Shield className="w-5 h-5 text-[#1A7A4A]" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#FAFAF7]">Escrow Protected</p>
-                <p className="text-xs text-[#FAFAF7]/60">Funds only release when content is approved</p>
+                <p className="text-sm font-medium text-[#FAFAF7]">
+                  Escrow Protected
+                </p>
+                <p className="text-xs text-[#FAFAF7]/60">
+                  Funds only release when content is approved
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4 p-4 rounded-xl bg-[#1A1A17] border border-[#3A3A35]">
@@ -177,8 +265,12 @@ export default function CompanyLoginPage() {
                 <TrendingUp className="w-5 h-5 text-[#C9943A]" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#FAFAF7]">ROI Tracking</p>
-                <p className="text-xs text-[#FAFAF7]/60">Full funnel analytics for every campaign</p>
+                <p className="text-sm font-medium text-[#FAFAF7]">
+                  ROI Tracking
+                </p>
+                <p className="text-xs text-[#FAFAF7]/60">
+                  Full funnel analytics for every campaign
+                </p>
               </div>
             </div>
           </div>
