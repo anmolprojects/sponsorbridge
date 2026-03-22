@@ -5,7 +5,6 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const role = searchParams.get('role') || 'creator'
-  const next = searchParams.get('next') ?? '/'
 
   if (!code) {
     return NextResponse.redirect(`${origin}/auth/error?error=no_code`)
@@ -16,7 +15,9 @@ export async function GET(request: Request) {
 
   if (error || !data.user) {
     console.error('Auth callback error:', error)
-    return NextResponse.redirect(`${origin}/auth/error?error=${error?.message}`)
+    return NextResponse.redirect(
+      `${origin}/auth/error?error=${encodeURIComponent(error?.message || 'unknown')}`
+    )
   }
 
   const user = data.user
@@ -29,29 +30,36 @@ export async function GET(request: Request) {
     .single()
 
   if (existingProfile) {
-    // Existing user — redirect to their dashboard
     if (existingProfile.role === 'creator') {
+      // If they never finished onboarding, send them back to finish it
+      if (!existingProfile.onboarding_complete) {
+        return NextResponse.redirect(`${origin}/creator/onboarding`)
+      }
       return NextResponse.redirect(`${origin}/creator/dashboard`)
     } else {
+      if (!existingProfile.onboarding_complete) {
+        return NextResponse.redirect(`${origin}/company/onboarding`)
+      }
       return NextResponse.redirect(`${origin}/company/dashboard`)
     }
   }
 
-  // New user — determine role and create profile records
-  // role comes from the OAuth redirect URL param we set during signIn
-  const userRole = (user.user_metadata?.role as 'creator' | 'company') || role
+  // ── Brand new user ────────────────────────────────────────────
+  const userRole = (user.user_metadata?.role as string) || role
 
-  // 1. Create base profile
+  // 1. Create base profile — onboarding_complete stays false until they fill details
   const { error: profileError } = await supabase.from('profiles').insert({
     id: user.id,
-    role: userRole as 'creator' | 'company',
+    role: userRole,
     full_name:
       user.user_metadata?.full_name ||
       user.user_metadata?.name ||
       user.email?.split('@')[0] ||
       'User',
     avatar_url:
-      user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+      user.user_metadata?.avatar_url ||
+      user.user_metadata?.picture ||
+      null,
     email: user.email || null,
     onboarding_complete: false,
   })
@@ -63,20 +71,24 @@ export async function GET(request: Request) {
     )
   }
 
-  // 2. Create role-specific profile
+  // 2. Create minimal role-specific profile placeholder
   if (userRole === 'creator') {
     await supabase.from('creator_profiles').insert({
       id: user.id,
       channel_name: user.user_metadata?.name || null,
       google_oauth_connected: true,
     } as any)
-    return NextResponse.redirect(`${origin}/creator/dashboard?welcome=true`)
+    // → Go fill channel details (steps 2 & 3)
+    return NextResponse.redirect(`${origin}/creator/onboarding`)
   } else {
     await supabase.from('company_profiles').insert({
       id: user.id,
-      company_name: user.user_metadata?.name || 'My Company',
-      contact_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+      company_name: 'My Company',
+      contact_name:
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        null,
     } as any)
-    return NextResponse.redirect(`${origin}/company/dashboard?welcome=true`)
+    return NextResponse.redirect(`${origin}/company/onboarding`)
   }
 }

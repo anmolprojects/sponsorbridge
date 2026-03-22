@@ -25,15 +25,13 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: Do not add logic between createServerClient and getUser()
-  // A simple mistake here could make your app insecure.
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
 
-  // Protect creator dashboard routes
+  // Protect dashboard routes
   if (pathname.startsWith('/creator/dashboard')) {
     if (!user) {
       const url = request.nextUrl.clone()
@@ -42,7 +40,6 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Protect company dashboard routes
   if (pathname.startsWith('/company/dashboard')) {
     if (!user) {
       const url = request.nextUrl.clone()
@@ -51,7 +48,24 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect authenticated users away from auth pages
+  // Protect onboarding routes
+  if (pathname.startsWith('/creator/onboarding')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/creator/login'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  if (pathname.startsWith('/company/onboarding')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/company/login'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Redirect logged-in users away from login/signup pages
   if (user) {
     if (pathname === '/creator/login' || pathname === '/creator/signup') {
       return NextResponse.redirect(new URL('/creator/dashboard', request.url))
@@ -66,13 +80,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
